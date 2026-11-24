@@ -2,7 +2,19 @@
 
 A DJ set preparation studio. Import your recordings, choose compatible genres, plan a four-stage energy journey, and take a timed running order to the booth.
 
-## Run on Windows, macOS or Linux
+## Start on Windows with PowerShell
+
+The default studio runs on your PC with no subscription, API key or per-song fee. Install Python 3.12 and FFmpeg (including ffprobe), then open PowerShell in the project folder:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
+```
+
+Open **http://localhost:8000** and create your studio account. You can import recordings and build a timed set immediately. To enable the conversational DJ assistant, follow the local model setup below.
+
+## Run with Docker or another Python environment
 
 Install Docker Desktop or Docker Engine, then run from this repository:
 
@@ -28,14 +40,23 @@ The included curator evaluates the analyzed library against stage targets, durat
 
 ## Enable model-based curation and chat
 
-Run Ollama, download an instruction-following model with sufficient context for the intended library, and configure the application. For example, on Windows PowerShell:
+For free local inference on Windows, install Ollama and quit it from the system tray if it is running. Open PowerShell and start Ollama in local-only mode:
+
+```powershell
+$env:OLLAMA_NO_CLOUD="1"
+ollama serve
+```
+
+Leave that window open. In a second PowerShell window, open the project folder. Download the local model once and start MixFlow:
 
 ```powershell
 ollama pull qwen2.5:7b
 $env:MIXFLOW_MODEL="qwen2.5:7b"
-$env:OLLAMA_URL="http://localhost:11434"
-python app.py
+$env:OLLAMA_URL="http://127.0.0.1:11434"
+.\.venv\Scripts\python.exe app.py
 ```
+
+If you already have a compatible local model in Ollama, use its name from `ollama list` for `MIXFLOW_MODEL` and skip the download. Local inference uses your computer’s memory and electricity. [Ollama local-only settings](https://docs.ollama.com/faq)
 
 For Docker Desktop add `-e MIXFLOW_MODEL=qwen2.5:7b -e OLLAMA_URL=http://host.docker.internal:11434` before the image name and ensure the container can reach Ollama. Each request includes the entire project's structured audio evidence, existing running order and preferences. Model output is validated against project IDs and stage names. Proposed changes to an existing set require confirmation. If the configured model is unavailable, the studio reports the error and retains the previous tracklist. Without a model, the studio uses the measured-feature sequencer and labels chat as unavailable.
 
